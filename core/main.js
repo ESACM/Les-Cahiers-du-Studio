@@ -1,4 +1,4 @@
-const getPath = require("platform-folders");
+// const getPath = require("platform-folders");
 const path = require("path");
 const fs = require("fs-extra");
 const portscanner = require("portscanner");
@@ -60,7 +60,7 @@ module.exports = function({ router }) {
 
   function setupApp() {
     return new Promise(function(resolve, reject) {
-      global.tempStorage = getPath.getCacheFolder();
+      global.tempStorage = global.settings.cacheDirPath; //getPath.getCacheFolder();
       global.ffmpeg_processes = [];
 
       if (
@@ -142,7 +142,7 @@ module.exports = function({ router }) {
 
   function copyAndRenameUserFolder() {
     return new Promise(function(resolve, reject) {
-      const userDirPath = getPath.getDocumentsFolder();
+      const userDirPath = global.settings.userDirPath; // getPath.getDocumentsFolder();
 
       const pathToUserContent = path.join(
         userDirPath,

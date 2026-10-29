@@ -322,7 +322,10 @@ module.exports = (function() {
                 `EXPORTER — makePDFForPubli : created cache folder at path ${cachePath}`
               );
 
-              const { BrowserWindow } = require('electron');
+              if (process.versions.hasOwnProperty("electron")) {
+                const { BrowserWindow } = require("electron");
+              }
+              
               let win = new BrowserWindow({
                 width: 800,
                 height: 600,

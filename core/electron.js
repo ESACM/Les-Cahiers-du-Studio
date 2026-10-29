@@ -6,10 +6,10 @@ app.commandLine.appendSwitch("ignore-certificate-errors", "true");
 app.commandLine.appendSwitch("allow-insecure-localhost", "true");
 app.commandLine.appendSwitch("disable-http-cache", "true");
 
-const electronPDFWindow = require("electron-pdf-window");
+// const electronPDFWindow = require("electron-pdf-window");
 
-const { dialog } = require("electron");
-const windowStateKeeper = require("electron-window-state");
+// const { dialog } = require("electron");
+// const windowStateKeeper = require("electron-window-state");
 
 module.exports = (function() {
   return {
@@ -99,7 +99,7 @@ module.exports = (function() {
       });
 
       mainWindowState.manage(win);
-      electronPDFWindow.addSupport(win);
+      // electronPDFWindow.addSupport(win);
 
       if (process.platform == "darwin") {
         app.setAboutPanelOptions({

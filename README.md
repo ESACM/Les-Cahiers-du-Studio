@@ -28,98 +28,115 @@ Furthermore, it was developed with the precious help from the following persons:
 
 Finally, we should mention that this app wouldn’t be the same if it weren’t for two other, older free and open-source apps: [Rekall](http://www.rekall.fr/) and [Ligne de Temps](http://www.iri.centrepompidou.fr/outils/lignes-de-temps/). Both had very interesting ideas and use cases that we drew inspiration from to make Les Cahiers du Studio.
 
-# Install Les Cahiers du Studio
+# Install Les Cahiers du Studio without running Electron
 
-### Method 1 — the easy way
+To run this app as a server application running on Debian 13, please follow these steps
 
-Download the latest release from the [release page](https://github.com/l-atelier-des-chercheurs/Les-Cahiers-du-Studio/releases).
+#### Setup environment
 
-### Method 2 — the long way
-
-_You need [node.js version 8.2.1](https://nodejs.org/download/release/v8.2.1/) and [python 2.7](https://www.python.org/) to install this app with this method. On Windows, you also need to install Microsoft’s Windows Build Tools by following the instructions [here](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#prerequisites)._
-
-#### 1. Download this repository
-
-Click on _Clone or Download_ in the top right corner of this page, then _Download ZIP_. Unpack this folder.
-
-#### 2. Open a terminal window
-
-Open a terminal window:
-
-* Windows: (XP) use [this tutorial](http://wikistrea.fr/Comment_ouvrir_la_console_de_commande_Windows_en_mode_administrateur_%3F) to open a terminal on Windows or open Command Prompt in the start menu
-* macOS: go to Applications -> Utilities -> Terminal
-* Linux: use a terminal app such as Terminal or Konsole
-
-In your terminal, navigate to the Les-Cahiers-du-Studio-master folder with your terminal using the `cd` command:
-
+Make sure your installation is up to date and prepare the packages needed
 ```
-cd path/to/Les-Cahiers-du-Studio-master
+sudo apt update && sudo apt upgrade -y
+sudo apt install git -y
 ```
 
-#### 3. Install dependencies
-
-If you haven’t already, install the tool that will enable native modules to be used. To do this, follow the instructions here: https://github.com/nodejs/node-gyp
-
-Then, install _les Cahiers_’s dependencies (may take up to 5 minutes):
-
+[Install nvm](https://github.com/nvm-sh/nvm#install--update-script)
 ```
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash
+```
+
+[Install Python 2.7](https://github.com/ctch3ng/Installing-Python-2.7-and-pip-on-Ubuntu-24.04-Noble-LTS), needed by node-gyp
+```
+sudo apt install -y build-essential checkinstall libncurses-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev libreadline-dev libdb-dev
+wget https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+tar xzf Python-2.7.18.tgz
+cd Python-2.7.18
+./configure --prefix=/usr/local/python2.7
+make
+sudo make install
+```
+
+#### Clone the repo, switch to the electronless branch and build
+```
+git clone https://github.com/ESACM/Les-Cahiers-du-Studio.git cahiers
+cd cahiers
+git checkout electronless
+nvm install # installs the node version needed and defined in .nvmrc
+nvm install-latest-npm
+cd public
 npm install
+npm run build # builds the dist/build.js file needed for serving the app
+cd ..
+export PYTHON=/usr/local/python2.7/bin/python2.7 # needed by node-gyp to build the platform-folders package
+npm install
+npm rebuild sharp
 ```
 
-#### 4. Run Les Cahiers du Studio
-
-Start from the folder in a terminal window with the following command:
+#### Run the app
 
 ```
-npm start
+cd cahiers
+nvm use
+npm run node-start
 ```
 
-#### Troubleshooting
-
-Most install errors (and especially the _Module version mismatch. Expected 50, got XX._) are due to native packages such as [sharp](https://github.com/lovell/sharp), a powerful image manipulation library.
-
-**The first thing to check is whether you use the right version of node.js: it must be version 8.2.1.
-To know the version you are running, write `node -v` in a terminal window.**
-
-The reason you have to use this version of node.js is because this app uses Electron, a tool to package node.js and a webbrowser as native apps. The version of Electron this app is using is version 1.8.2, and it uses node version 8.2.1. However, when native modules are built, they are built using the local node version and not Electron’s. Hence, you have to run the exact same version as Electron to prevent this type of error to happen.
-
-Because switching between node version is annoying, it is recommended to use [nvm](https://github.com/creationix/nvm) to do so ([nvm windows](https://github.com/coreybutler/nvm-windows) for Windows).
-
-Here are a few other things you can try (but only after making sure you run the right node version):
-
-1.  Sometimes, Electron is not installed when running `npm install` on the repo. It may help to run `npm install electron@1.8.2` just to be sure it is actually installed locally.
-
-1.  Follow the instructions [here](https://github.com/electron/electron/blob/master/docs/tutorial/using-native-node-modules.md), and specifically:
+To keep it running in the background (ie launching after opening an SSH connexion), you can use screen
 
 ```
-# Electron's version.
-export npm_config_target=1.8.2
-# The architecture of Electron, can be ia32 or x64.
-export npm_config_arch=x64
-export npm_config_target_arch=x64
-# Download headers for Electron.
-export npm_config_disturl=https://atom.io/download/electron
-# Tell node-pre-gyp that we are building for Electron.
-export npm_config_runtime=electron
-# Tell node-pre-gyp to build module from source code.
-export npm_config_build_from_source=true
-# Install all dependencies, and store cache to ~/.electron-gyp.
-HOME=~/.electron-gyp npm install
+screen
+cd cahiers
+nvm use
+npm run node-start
 ```
 
-3.  electron-builder (which builds electron to an app) embeds a script that rebuilds dependencies according to electron. To use it, write:
+Use ctrl+a then d to exit the screen session, this keeps the app running but you can quit your SSH session
+
+#### Autostart with systemd
+
+Create the service file
 
 ```
-./node_modules/.bin/electron-builder install-app-deps
+sudo nano /etc/systemd/system/cahiers.service
 ```
 
-**sharp on ubuntu**
-
-It seems the dependency sharp cannot be built easily on Ubuntu. Install an older version to fix this:
+Content of the file. Modify for the right user and paths
 
 ```
-npm install sharp@0.17.3
+[Unit]
+Description=Les Cahiers du Studio
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=<user>
+ExecStart=/home/<user>/.nvm/versions/node/v8.9.3/bin/node /home/<user>/cahiers/index.js
+
+[Install]
+WantedBy=multi-user.target
 ```
+
+Test that it's running and it's status
+
+```
+sudo systemctl start cahiers.service
+sudo systemctl status cahiers.service
+```
+
+If everything looks good, enable the service and reboot to check it starts at launch
+
+```
+sudo systemctl enable cahiers.service
+<reboot>
+sudo systemctl status cahiers.service
+```
+
+
+# ToDo
+
+Wrap all that in a Docker container to ease the deployment
 
 # Tweak, fork and debug
 

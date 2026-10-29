@@ -3,7 +3,8 @@
   "host": "localhost",
   "desired_port": 8080,
   "redirect_port": "",
-  "userDirPath": "documents",
+  "userDirPath": "./documents",
+  "cacheDirPath": "./.cache",
   "userDirname": "les-cahiers",
   "cache_content": true,
 
